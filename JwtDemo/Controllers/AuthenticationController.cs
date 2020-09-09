@@ -1,13 +1,38 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using JwtDemo.Interface;
+using JwtDemo.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace JwtDemo.Controllers
 {
-    public class AuthenticationController : Controller
+    [Route("api/[controller]")]
+    [ApiController]
+    public class AuthenticationController : ControllerBase
     {
-        // GET
-        public IActionResult Index()
+        private readonly IAuthenticateService _authenticateService;
+
+        public AuthenticationController(IAuthenticateService authenticateService)
         {
-            return View();
+            _authenticateService = authenticateService;
+        }
+
+        [AllowAnonymous]
+        [HttpPost]
+        [Route("requestToken")]
+        public ActionResult RequestToken([FromBody] LoginRequestDTO request)
+        {
+            if (!ModelState.IsValid) return BadRequest("Invalid Request");
+
+            if (_authenticateService.IsAuthenticated(request, out var token))
+            {
+                return Ok(new
+                {
+                    access_token = token,
+                    token_type = "Bearer",
+                });
+            }
+
+            return BadRequest("Invalid Request");
         }
     }
 }
